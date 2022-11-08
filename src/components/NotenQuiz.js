@@ -5,6 +5,11 @@ import NotesScore from "./NotesScore";
 import Keyboard from "./Keyboard";
 import QuizSettings from "./QuizSettings";
 import notesCollection, {notesOctaveReservoir, notesAccidentalReservoir} from "./NotesCollection";
+import {Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useMediaQuery} from "@material-ui/core";
+import SentimentSatisfiedAltIcon from '@material-ui/icons/SentimentSatisfiedAlt';
+import SentimentVeryDissatisfiedIcon from '@material-ui/icons/SentimentVeryDissatisfied';
+import SettingsIcon from '@material-ui/icons/Settings';
+import {useTheme} from '@material-ui/core/styles';
 
 /* Backlog:
 // Ergänzung um Intervallübung
@@ -38,20 +43,30 @@ export default function NotesQuiz() {
         {keyboardKey: 12, notes: [{noteBase: "b", noteAccidental: "unsigned"}, {noteBase: "c", noteAccidental: "flat"}]}
     ]
 
+    /*
     let initialNoteState = notesCollection[Math.floor(Math.random() * notesCollection.length)];
     let initialKeyState = mapKeyNotes.filter(m => m.notes.some(n => n.noteBase === initialNoteState.noteBase && n.noteAccidental === initialNoteState.noteAccidental))[0].keyboardKey;
+    */
+    let initialClefs = ["violin"];
+    let initialAccidentals = notesAccidentalReservoir.map(a => a[0]).filter(a => a == "unsigned");
+    let initialOctaves = [1];
+    let initialNoteAndKeyState = selectInitialNote({clefs: initialClefs, accidentals: initialAccidentals, octaves: initialOctaves});
 
-    const [noteAndKey, setNoteAndKey] = React.useState([initialNoteState, initialKeyState]);
+    const [noteAndKey, setNoteAndKey] = React.useState(initialNoteAndKeyState);
     const [counter0, setCounter0] = React.useState(0);
     const [counter1, setCounter1] = React.useState(0);
     const [evaluate, setEvaluate] = React.useState(true);
     const [instructionText, setInstructionText] = React.useState(<br />);
     const [wrongKey, setWrongKey] = React.useState(0);
     const [showSettings, setShowSettings] = React.useState(false);
-    const [clefsSelected, setClefsSelected] = React.useState(["bass", "violin"]);
-    const [accidentalsSelected, setAccidentalsSelected] = React.useState(notesAccidentalReservoir);
-    const [octavesSelected, setOctavesSelected] = React.useState(notesOctaveReservoir);
+    const [clefsSelected, setClefsSelected] = React.useState(initialClefs);
+    const [accidentalsSelected, setAccidentalsSelected] = React.useState(initialAccidentals);
+    const [octavesSelected, setOctavesSelected] = React.useState(initialOctaves);
     const [errorMessage, setErrorMessage] = React.useState("");
+
+    const theme = useTheme();
+    const isVeryNarrow = useMediaQuery(theme.breakpoints.down("xs"));
+    const isNarrow = useMediaQuery(theme.breakpoints.down("sm"));
 
     function registerSettingsClick() {
         setShowSettings(!showSettings)
@@ -72,7 +87,7 @@ export default function NotesQuiz() {
                             selectNewNote({clefs: newClefSelection});
                         }                 
                     } else {
-                        setErrorMessage("Your selection could not be updated. Please ensure that the combination of selected clefs and octaves is reasonable.");
+                        setErrorMessage("Die Auswahl konnte nicht angepasst werden. Bitte sicherstellen, dass die Kombination von Notenschlüsseln und Oktavbereichen sinnvoll ist.");
                     }
                 }
                 break;
@@ -89,7 +104,7 @@ export default function NotesQuiz() {
                             selectNewNote({octaves: newOctaveSelection});
                         }
                     } else {
-                        setErrorMessage("Your selection could not be updated. Please ensure that the combination of selected clefs and octaves is reasonable.");
+                        setErrorMessage("Die Auswahl konnte nicht angepasst werden. Bitte sicherstellen, dass die Kombination von Notenschlüsseln und Oktavbereichen sinnvoll ist.");
                     }
                 }
                 break;
@@ -107,7 +122,7 @@ export default function NotesQuiz() {
                         }
                         
                     } else {
-                        setErrorMessage("Your selection could not be updated. You must select at least one accidental type.");
+                        setErrorMessage("Die Auswahl konnte nicht angepasst werden. Bitte mindestens einen Vorzeichentypen auswählen.");
                     }
                 }
             }      
@@ -128,6 +143,13 @@ export default function NotesQuiz() {
         return([].concat(clefs).some(c => c === noteAndKey[0].noteClef) && [].concat(octaves).some(o => o === noteAndKey[0].noteOctave) && [].concat(accidentals).some(a => a === noteAndKey[0].noteAccidental));
     }
 
+    function selectInitialNote({clefs, octaves , accidentals} = {}) {
+        let validNotesCollection = notesCollection.filter(n => [].concat(clefs).some(c => c === n.noteClef) && [].concat(octaves).some(o => o === n.noteOctave) && [].concat(accidentals).some(a => a === n.noteAccidental));
+        let nextNoteState = validNotesCollection[Math.floor(Math.random() * validNotesCollection.length)];
+        let nextKeyState = mapKeyNotes.filter(m => m.notes.some(n => n.noteBase === nextNoteState.noteBase && n.noteAccidental === nextNoteState.noteAccidental))[0].keyboardKey;
+        return [nextNoteState, nextKeyState];
+    }
+        
     function selectNewNote({clefs = clefsSelected, octaves = octavesSelected, accidentals = accidentalsSelected} = {}) {
         let validNotesCollection = notesCollection.filter(n => [].concat(clefs).some(c => c === n.noteClef) && [].concat(octaves).some(o => o === n.noteOctave) && [].concat(accidentals).some(a => a === n.noteAccidental));
         let nextNoteState = validNotesCollection[Math.floor(Math.random() * validNotesCollection.length)];
@@ -146,62 +168,99 @@ export default function NotesQuiz() {
                 setCounter0(counter0 + 1);
                 setWrongKey(() => keyPressed.target.id);
             }
-            setInstructionText('For next note press any key.');
+            setInstructionText('Für nächste Note bitte eine Taste drücken');
         } else {
             selectNewNote();
         }
         setEvaluate(e => !e);
     }
 
-    return (
+    let percentage = (counter0 || counter1)? Math.round(100*counter1 / (counter0 + counter1)) : 'N/A';
+
+    let quizContent = 
         <>
-            <div align = "center">
-                <NotesScore definedNote={noteAndKey[0]} />
-            </div>
-            <div align = "center">
-                <Keyboard correctKey={evaluate ? 0 : noteAndKey[1]} wrongKey={evaluate ? 0: wrongKey} onClickHandler={registerKeyPlay} />
-                <div style={{fontSize: '6pt', fontWeight: 'normal'}}>{instructionText}</div>
-            </div>
-            <div align = "center">
-                <p></p>
-                <table width = '140px'>
-                    <thead>
-                        <tr>
-                            <th style={{textAlign: 'center', 'fontSize': '8pt'}} width = '47px'>Correct</th>
-                            <th style={{textAlign: 'center', 'fontSize': '8pt'}} width = '47px'>Wrong</th>
-                            <th style={{textAlign: 'center', 'fontSize': '8pt'}} width = '46px'>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style={{textAlign: 'center', fontSize: '8pt', backgroundColor: '#E2F0D9'}}>{counter1}</td>
-                            <td style={{textAlign: 'center', fontSize: '8pt', backgroundColor:'#FFC3C3'}}>{counter0}</td>
-                            <td style={{textAlign: 'center', fontSize: '8pt', backgroundColor:'#F2F4F4'}}>{counter1 - counter0}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p />
-            <div align="center" style={{fontSize: '6pt', fontWeight: 'normal'}}>
-                <table width = '140px' style={{fontSize: '6pt', fontWeight:'bold', backgroundColor:'white', paddingLeft:'0pt'}}>
-                    <thead>
-                        <tr onClick={registerSettingsClick} style={{backgroundColor:'#F2F4F4'}}>
-                            <th style={{textAlign: 'center'}} width='5px'>                                
-                                <label>{showSettings ? "– " : "+ "}</label>                                
-                            </th>
-                            <th style={{textAlign: 'left'}}>
-                               <label>Settings</label>
-                            </th>
-                        </tr>
-                        <tr>
-                            <td />
-                            <td>
-                                {showSettings ? <QuizSettings errorMessage={errorMessage} clefs={clefsSelected} octaves={octavesSelected} accidentals={accidentalsSelected} settingsChangeHandler={registerSettingsChange} /> : ""}
-                            </td>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
+            <Grid item xs={isVeryNarrow? "0" : "2"}/>
+            <Grid item xs={isVeryNarrow? "12" : "8"}>
+                <Grid container>
+                    <Grid item xs="12" align="right">
+                        <p/>
+                        <SettingsIcon onClick={registerSettingsClick}/>
+                    </Grid>
+                    <Grid item xs="12" align="left">
+                        {showSettings ? <QuizSettings errorMessage={errorMessage} clefs={clefsSelected} octaves={octavesSelected} accidentals={accidentalsSelected} settingsChangeHandler={registerSettingsChange} /> : ""}
+                    </Grid>                       
+                    <Grid item xs="12">
+                        <NotesScore definedNote={noteAndKey[0]} />
+                    </Grid>
+                    <Grid item xs="12">
+                        <Keyboard correctKey={evaluate ? 0 : noteAndKey[1]} wrongKey={evaluate ? 0: wrongKey} onClickHandler={registerKeyPlay} />
+                    </Grid>
+                    <Grid item xs="12" align="center">
+                        <Typography variant="body2">
+                            {instructionText}
+                        </Typography>
+                    </Grid>
+                    <Grid item xs="12" align="center">
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell width="33%" align="center" style={{backgroundColor: "#E2F0D9", padding: "1%"}}>
+                                            <SentimentSatisfiedAltIcon style={{verticalAlign: "middle"}}/> 
+                                        </TableCell>
+                                        <TableCell width="33%" align="center" style={{backgroundColor: "#FFC3C3", padding: "1%"}}>
+                                            <SentimentVeryDissatisfiedIcon style={{verticalAlign: "middle"}}/>
+                                        </TableCell>
+                                        <TableCell width="34%" align="center" style={{backgroundColor: "#F2F4F4", padding: "1%"}}> 
+                                            <Typography variant="h6">
+                                                %
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell width="33%" align="center" style={{padding: "0%"}}>
+                                            <Typography variant="subtitle2" style={{verticalAlign: "middle"}}>
+                                                {counter1}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell width="33%" align="center" style={{padding: "0%"}}>
+                                            <Typography variant="subtitle2" style={{verticalAlign: "middle"}}>
+                                                {counter0}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell width="34%" align="center" stype={{padding: "0%"}}>
+                                            <Typography variant="subtitle2" style={{verticalAlign: "middle"}}>
+                                                {percentage}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Grid>
+                </Grid>
+            </Grid>
+            <Grid item xs={isVeryNarrow? "0" : "2"}/>
+        </>;
+
+    return (   
+        <>
+            {isNarrow ? (
+                <Grid container spacing={0} justifyContent="space-between" alignItems="center" style={{ padding: "1%" }}>
+                    {quizContent}
+                </Grid>) : (
+                <Grid container spacing={3} justifyContent="space-between" alignItems="center">
+                    <Grid item xs="3" />
+                    <Grid item xs="6">
+                        <Grid container>
+                            {quizContent}
+                        </Grid>
+                    </Grid>
+                    <Grid item xs="3" />
+                </Grid>
+            )}
         </>
-    );
+    )
 }

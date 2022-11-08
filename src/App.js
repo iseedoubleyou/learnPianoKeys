@@ -6,8 +6,8 @@ import NotesQuiz from "./components/NotesQuiz";
 function App() {
   return (
     <div id="App" className="App" style={{fontSize: "14px", fontWeight: "bold"}}>
-      Music Notes Quiz
-      <NotesQuiz />
+      Notenquiz
+      <NotenQuiz />
     </div>
   );
 }

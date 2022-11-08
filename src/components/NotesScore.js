@@ -12,7 +12,7 @@ export default function NotesScore(props) {
     
     const stavesDrawing =
         <path 
-            stroke = "red" 
+            stroke = "black" 
             strokeWidth = "0.5px"
             d = "M10 50 h140 m0 10 h-140 m0 10 h140 m0 10 h-140 m0 10 h140" />;
     
@@ -71,7 +71,7 @@ export default function NotesScore(props) {
 
     return (
         <div>
-            <svg xmlns="http://www.w3.org/2000/svg" width="160" height="140" version="1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 140" version="1">
                 <g>
                     {stavesDrawing}
                     {ledgerLinesDrawing()}
