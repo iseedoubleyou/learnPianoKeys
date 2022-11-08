@@ -1,6 +1,6 @@
 import React from "react";
 import './App.css';
-import NotesQuiz from "./components/NotesQuiz";
+import NotenQuiz from "./components/NotenQuiz";
 
 
 function App() {
