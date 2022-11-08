@@ -5,7 +5,7 @@ import NotenQuiz from "./components/NotenQuiz";
 
 function App() {
   return (
-    <div id="App" className="App" style={{fontSize: "14px", fontWeight: "bold"}}>
+    <div id="App" className="App" style={{fontSize: "32px", fontWeight: "bold"}}>
       Notenquiz
       <NotenQuiz />
     </div>
