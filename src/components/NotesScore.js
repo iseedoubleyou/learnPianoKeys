@@ -12,7 +12,7 @@ export default function NotesScore(props) {
     
     const stavesDrawing =
         <path 
-            stroke = "black" 
+            stroke = "red" 
             strokeWidth = "0.5px"
             d = "M10 50 h140 m0 10 h-140 m0 10 h140 m0 10 h-140 m0 10 h140" />;
     
